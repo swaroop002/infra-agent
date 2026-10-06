@@ -1,0 +1,92 @@
+# Production configuration template. Copy to config/agent.yaml.
+# ${VAR} and ${VAR:-default} are read from the environment; keep secrets in env vars only.
+
+llm:
+  # Any LangChain provider: anthropic:…, openai:…, azure_openai:…, google_genai:…, bedrock_converse:…
+  model: ${INFRA_AGENT_MODEL:-anthropic:claude-opus-5}
+  params:
+    max_tokens: 8000
+  # fallbacks:
+  #   - model: openai:gpt-5
+  #     params: {max_tokens: 8000}
+  max_tool_rounds: 12
+  max_history_turns: 10
+
+knowledge:
+  catalog_dirs: [knowledge/catalog]
+  docs_dirs: [knowledge/docs]
+  # Optional hybrid search. Omit for BM25 only (no external calls).
+  # embeddings: openai:text-embedding-3-large
+
+backends:
+  metrics:
+    type: prometheus
+    url: ${PROMETHEUS_URL}
+    # Pick whichever auth your Prometheus / Mimir gateway uses:
+    token_env: PROMETHEUS_TOKEN
+    # username_env: PROMETHEUS_USER
+    # password_env: PROMETHEUS_PASSWORD
+    # headers: {X-Scope-OrgID: tenant-1}
+    grafana_url: ${GRAFANA_URL}
+    grafana_datasource_uid: ${GRAFANA_PROMETHEUS_UID}
+  metrics_retention: 7d
+  node_job_regex: ${NODE_JOB_REGEX:-.*node.*}
+
+  logs:
+    type: loki
+    url: ${LOKI_URL}
+    token_env: LOKI_TOKEN
+    # tenant_id: tenant-1
+    grafana_url: ${GRAFANA_URL}
+    grafana_datasource_uid: ${GRAFANA_LOKI_UID}
+
+  alerts:
+    - type: grafana                 # Grafana-managed alerts (Alertmanager API)
+      url: ${GRAFANA_URL}
+      token_env: GRAFANA_TOKEN      # service account token with Viewer role
+      alertmanager: grafana
+    - type: oncall                  # Grafana OnCall OSS or Grafana Cloud IRM
+      url: ${ONCALL_API_URL}
+      token_env: ONCALL_API_TOKEN
+
+  inventory:
+    - type: aws
+      regions: [ap-south-1]
+      # profile: readonly
+      # role_arn: arn:aws:iam::123456789012:role/infra-agent-readonly
+    - type: azure
+      subscription_id: ${AZURE_SUBSCRIPTION_ID}
+    - type: gcp
+      projects: ["${GCP_PROJECT}"]
+
+  prober:
+    type: http
+
+ledger:
+  # sqlite for a single instance; postgresql+psycopg://user:pass@host/db for production
+  url: ${LEDGER_URL:-sqlite:///data/ledger.db}
+  interval_s: 60
+  failure_threshold: 2
+  sample_retention_days: 90
+  run_in_server: true   # set false and run `infra-agent collector run` separately if you scale the API
+
+notifications:
+  # teams_workflow_url_env: TEAMS_WORKFLOW_URL
+  notify_on: [down, up]
+
+memory:
+  type: sqlite
+  url: data/conversations.db
+
+server:
+  host: 0.0.0.0
+  port: 8080
+  auth:
+    mode: trusted_header        # behind oauth2-proxy / Entra ID application proxy
+    trusted_header: X-Forwarded-Email
+    # mode: api_key
+    # api_keys_env: INFRA_AGENT_API_KEYS
+
+teams:
+  enabled: true
+  long_running_messages: true

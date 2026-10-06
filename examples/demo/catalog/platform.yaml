@@ -1,0 +1,39 @@
+clusters:
+  - id: prod-aks
+    name: prod-aks
+    aliases: [aks, azure cluster, production aks]
+    description: Production AKS cluster (payments, identity, notifications)
+    environment: production
+    cloud: azure
+    region: centralindia
+    prometheus: {cluster: prod-aks}
+    nodepool_label: agentpool
+    namespaces: [payments, identity, notifications, ingress-nginx, monitoring]
+
+  - id: prod-gke
+    name: prod-gke
+    aliases: [gke, google cluster, production gke]
+    description: Production GKE cluster (reports, analytics)
+    environment: production
+    cloud: gcp
+    region: asia-south1
+    prometheus: {cluster: prod-gke}
+    nodepool_label: cloud_google_com_gke_nodepool
+    namespaces: [reports, analytics, monitoring]
+
+vibe:
+  description: Self-service development VMs provisioned with boto3 + Ansible, preloaded with VS Code (code-server) and the deployments manager.
+  provider: aws
+  tag_filter: {Purpose: vibe-coding}
+  owner_tag: Owner
+  name_tag: Name
+  address: private_ip
+  provision_status_tag: ProvisionStatus
+  apps:
+    - {name: vscode, port: 8080, path: /healthz}
+    - {name: deployments-manager, port: 9000, path: /health}
+  runbooks: [runbooks/vibe-vms.md]
+
+glossary:
+  RGS: report generation service
+  PG: payments api

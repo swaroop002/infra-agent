@@ -1,0 +1,78 @@
+# Eval cases for the demo world (examples/demo/scenario.yaml).
+# expect_in_answer items: a string, or a list meaning "any of these".
+cases:
+  - id: dev-server-down
+    question: Is the development server down?
+    expect_tools_any: [get_host_status]
+    expect_in_answer: ["dev-app-01", [unreachable, down, not reachable]]
+    forbid_in_answer: ["is up and healthy"]
+
+  - id: payments-failure-rate-24h
+    question: What was the API failure rate for the payments API in the past 24 hrs?
+    expect_tools_any: [get_api_error_rate, check_service_health]
+    expect_in_answer: [["2.7", "2.70"], ["/v1/charges", "charges"]]
+
+  - id: report-generation-issues
+    question: Are there any issues with the report generation service?
+    expect_tools_any: [check_service_health]
+    expect_in_answer: [[crashloop, CrashLoopBackOff, OOM, out of memory], ["503", health check], [prod-report-worker-02, worker]]
+
+  - id: glossary-alias
+    question: is RGS healthy right now?
+    expect_tools_any: [check_service_health]
+    expect_in_answer: [[report generation, report-generation]]
+
+  - id: which-servers-down
+    question: Which servers are down right now?
+    expect_tools_any: [list_down_hosts]
+    expect_in_answer: [dev-app-01, prod-report-worker-02, "10.40.0.9"]
+
+  - id: stopped-vs-unreachable
+    question: Why is report worker 2 down?
+    expect_tools_any: [get_host_status]
+    expect_in_answer: [[stopped]]
+
+  - id: host-downtime-week
+    question: How much downtime did dev-app-01 have in the last 7 days?
+    expect_tools_any: [get_host_downtime]
+    expect_in_answer: [["98.", availability, uptime]]
+
+  - id: staging-disk
+    question: Is anything wrong with the staging server?
+    expect_tools_any: [get_host_status]
+    expect_in_answer: [[disk, "93"]]
+
+  - id: vibe-alice
+    question: Alice says her deployments manager isn't working on her vibe VM. What's going on?
+    expect_tools_any: [get_vibe_vm_status, list_vibe_vms]
+    expect_in_answer: [[deployments-manager, deployments manager], [refused, not responding, down]]
+
+  - id: vibe-unhealthy
+    question: Are any vibe-coding VMs unhealthy?
+    expect_tools_any: [list_vibe_vms, get_vibe_vm_status]
+    expect_in_answer: [[carol, vibe-carol-02], [impaired]]
+
+  - id: active-alerts
+    question: What alerts are firing right now?
+    expect_tools_any: [get_recent_alerts]
+    expect_in_answer: [[ReportGeneratorPodsCrashLooping, crash]]
+
+  - id: read-only-refusal
+    question: Restart the development server please.
+    forbid_tools: [query_prometheus, query_loki]
+    expect_in_answer: [[can't, cannot, read-only, not able, unable]]
+
+  - id: follow-up-context
+    setup_turns: ["Is the development server down?"]
+    question: Since when?
+    expect_in_answer: [[UTC, " ago", minutes, min]]
+
+  - id: unknown-entity
+    question: Is the billing-ledger service healthy?
+    expect_in_answer: [[not in the catalog, couldn't find, could not find, no service, not found, don't have, isn't in, not aware]]
+    forbid_in_answer: ["billing-ledger is healthy"]
+
+  - id: runbook-lookup
+    question: What's the runbook procedure when a VM is unreachable?
+    expect_tools_any: [search_knowledge_base]
+    expect_in_answer: [[node_exporter, "9100", serial]]

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Infra Agent</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">Infra Agent</span>
+      <span class="badge" id="readonly-badge" title="v1 is strictly read-only">read-only</span>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab active" role="tab" data-tab="ask" aria-selected="true">Ask</button>
+      <button class="tab" role="tab" data-tab="alerts" aria-selected="false">Alerts <span class="count" id="alerts-count" hidden></span></button>
+      <button class="tab" role="tab" data-tab="status" aria-selected="false">Status</button>
+    </nav>
+    <div class="meta" id="meta"></div>
+  </header>
+
+  <main>
+    <!-- ASK -->
+    <section class="panel" id="panel-ask">
+      <div class="chat" id="chat">
+        <div class="empty" id="chat-empty">
+          <h1>What do you want to know about the infrastructure?</h1>
+          <p class="muted">Answers come from Prometheus, Loki, Grafana, OnCall, the cloud APIs and the knowledge base, and every answer shows its evidence.</p>
+          <div class="suggestions" id="suggestions">
+            <button class="chip">Is the development server down?</button>
+            <button class="chip">What was the API failure rate for the payments API in the past 24 hours?</button>
+            <button class="chip">Are there any issues with the report generation service?</button>
+            <button class="chip">Which servers are down right now?</button>
+            <button class="chip">Show service uptime for the last 7 days</button>
+            <button class="chip">Are any vibe-coding VMs unhealthy?</button>
+          </div>
+        </div>
+      </div>
+      <form class="composer" id="composer">
+        <textarea id="input" rows="1" placeholder="Ask about a server, service, API or alert…" autocomplete="off"></textarea>
+        <div class="composer-actions">
+          <button type="button" class="ghost" id="new-thread" title="Start a new conversation">New chat</button>
+          <button type="submit" class="primary" id="send">Ask</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- ALERTS -->
+    <section class="panel" id="panel-alerts" hidden>
+      <div class="toolbar">
+        <div class="segmented" id="alert-window">
+          <button data-v="1h">1h</button><button data-v="6h">6h</button><button data-v="24h" class="on">24h</button><button data-v="7d">7d</button>
+        </div>
+        <div class="segmented" id="alert-state">
+          <button data-v="" class="on">All</button><button data-v="firing,acknowledged">Active</button><button data-v="resolved">Resolved</button>
+        </div>
+        <input type="search" id="alert-search" placeholder="Filter by title, label…">
+        <button class="ghost" id="alert-refresh">Refresh</button>
+      </div>
+      <div class="summary" id="alert-summary"></div>
+      <div class="list" id="alert-list"><div class="muted pad">Loading…</div></div>
+    </section>
+
+    <!-- STATUS -->
+    <section class="panel" id="panel-status" hidden>
+      <div class="toolbar">
+        <span class="muted" id="status-updated"></span>
+        <div class="segmented" id="uptime-window">
+          <button data-v="24h">24h</button><button data-v="7d" class="on">7d</button><button data-v="30d">30d</button>
+        </div>
+        <button class="ghost" id="status-refresh">Refresh</button>
+      </div>
+      <div class="cards" id="status-cards"></div>
+      <div class="grid2">
+        <div class="card-block"><h2>Servers down</h2><div id="status-down"></div></div>
+        <div class="card-block"><h2>Open outages</h2><div id="status-outages"></div></div>
+      </div>
+      <div class="card-block"><h2>Services</h2><div class="table-wrap" id="status-services"></div></div>
+      <div class="card-block"><h2>Uptime <span class="muted small" id="uptime-label"></span></h2><div class="table-wrap" id="status-uptime"></div></div>
+      <div class="card-block" id="vibe-block" hidden><h2>Vibe-coding VMs</h2><div class="table-wrap" id="status-vibe"></div></div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

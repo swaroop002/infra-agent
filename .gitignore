@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+data/
+evals/results/
+.env
+config/agent.yaml
+knowledge/catalog/_discovered/
+.pytest_cache/
+.ruff_cache/

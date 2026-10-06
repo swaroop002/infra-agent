@@ -1,0 +1,80 @@
+services:
+  - id: payments-api
+    name: Payments API
+    aliases: [payments, payment api, payments service]
+    description: Card and UPI payment processing API used by checkout
+    environment: production
+    team: payments
+    owner: payments-oncall
+    criticality: critical
+    kubernetes:
+      - {cluster: prod-aks, namespace: payments, name: payments-api}
+    health_checks:
+      - name: healthz
+        url: https://payments.internal.example.com/healthz
+    logs:
+      selector: '{namespace="payments", app="payments-api"}'
+      parser: "| json"
+      request_filter: '|= "\"type\":\"access\""'
+      error_filter: "| status >= 500"
+      path_label: path
+    depends_on: [auth-service]
+    slo: {availability_pct: 99.95, error_rate_pct: 1.0}
+    alert_match:
+      labels: {service: payments-api}
+    runbooks: [runbooks/payments-api.md]
+
+  - id: report-generation
+    name: Report Generation Service
+    aliases: [report generation, reports, report service, report generator]
+    description: Generates scheduled and on-demand PDF/Excel reports
+    environment: production
+    team: reporting
+    criticality: high
+    hosts: [prod-report-worker-01, prod-report-worker-02]
+    kubernetes:
+      - {cluster: prod-gke, namespace: reports, name: report-generator}
+    health_checks:
+      - name: health
+        url: https://reports.internal.example.com/health
+    logs:
+      selector: '{namespace="reports", app="report-generator"}'
+      parser: "| logfmt"
+      error_filter: '| level="error"'
+      path_label: endpoint
+    depends_on: [auth-service]
+    slo: {availability_pct: 99.5, error_rate_pct: 2.0}
+    alert_match:
+      labels: {service: report-generation}
+    runbooks: [runbooks/report-generation.md]
+
+  - id: auth-service
+    name: Auth Service
+    aliases: [identity, sso, login service]
+    description: OAuth/OIDC token issuance for all internal APIs
+    environment: production
+    team: identity
+    criticality: critical
+    kubernetes:
+      - {cluster: prod-aks, namespace: identity, name: auth}
+    health_checks:
+      - name: ready
+        url: https://auth.internal.example.com/ready
+    logs:
+      selector: '{namespace="identity", app="auth"}'
+      parser: "| json"
+      error_filter: "| status >= 500"
+      path_label: path
+    slo: {availability_pct: 99.95, error_rate_pct: 0.5}
+
+  - id: dev-portal
+    name: Developer Portal
+    aliases: [dev portal]
+    description: Internal developer portal running on the development server
+    environment: development
+    team: platform
+    criticality: low
+    hosts: [dev-app-01]
+    health_checks:
+      - name: health
+        url: http://10.10.1.15:8080/health

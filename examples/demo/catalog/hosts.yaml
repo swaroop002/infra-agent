@@ -1,0 +1,65 @@
+# Demo catalog — fictional hosts that mirror the shape of a real estate.
+hosts:
+  - id: dev-app-01
+    name: dev-app-01
+    aliases: [development server, dev server, dev box]
+    description: Shared development application server (dev portal, feature branches)
+    environment: development
+    team: platform
+    cloud: aws
+    region: ap-south-1
+    prometheus: {job: node, instance: "10.10.1.15:9100"}
+    cloud_ref: {provider: aws, instance_id: i-0a1b2c3d4e5f60001, region: ap-south-1}
+    services: [dev-portal]
+    runbooks: [runbooks/host-down.md]
+
+  - id: stg-app-01
+    aliases: [staging server]
+    description: Staging application server
+    environment: staging
+    team: platform
+    cloud: azure
+    region: centralindia
+    prometheus: {job: node, instance: "10.20.4.7:9100"}
+    cloud_ref: {provider: azure, resource_group: rg-staging, vm_name: stg-app-01}
+    runbooks: [runbooks/host-down.md]
+
+  - id: prod-report-worker-01
+    aliases: [report worker 1]
+    description: Report rendering worker (PDF/Excel exports)
+    environment: production
+    team: reporting
+    cloud: gcp
+    region: asia-south1
+    prometheus: {job: node, instance: "10.30.2.11:9100"}
+    cloud_ref: {provider: gcp, project: acme-prod, zone: asia-south1-a, instance_name: prod-report-worker-01}
+    services: [report-generation]
+
+  - id: prod-report-worker-02
+    aliases: [report worker 2]
+    description: Report rendering worker (PDF/Excel exports)
+    environment: production
+    team: reporting
+    cloud: gcp
+    region: asia-south1
+    prometheus: {job: node, instance: "10.30.2.12:9100"}
+    cloud_ref: {provider: gcp, project: acme-prod, zone: asia-south1-b, instance_name: prod-report-worker-02}
+    services: [report-generation]
+
+  - id: prod-db-01
+    aliases: [primary database server, prod database]
+    description: PostgreSQL primary for payments and identity
+    environment: production
+    team: data
+    cloud: aws
+    region: ap-south-1
+    prometheus: {job: node, instance: "10.10.8.20:9100"}
+    cloud_ref: {provider: aws, instance_id: i-0a1b2c3d4e5f60020, region: ap-south-1}
+
+  - id: build-runner-01
+    aliases: [ci server, jenkins]
+    description: CI build runner
+    environment: shared
+    team: platform
+    cloud: azure
+    prometheus: {job: node, instance: "10.20.9.3:9100"}

@@ -1,0 +1,21 @@
+# Clusters, the vibe-coding platform and company glossary.
+# Uncomment and fill in; see docs/knowledge-base.md.
+
+clusters: []
+#  - id: prod-aks
+#    aliases: [aks]
+#    cloud: azure
+#    prometheus: {cluster: prod-aks}
+#    nodepool_label: agentpool
+
+# vibe:
+#   provider: aws
+#   tag_filter: {Purpose: vibe-coding}
+#   owner_tag: Owner
+#   provision_status_tag: ProvisionStatus
+#   address: private_ip
+#   apps:
+#     - {name: vscode, port: 8080, path: /healthz}
+#     - {name: deployments-manager, port: 9000, path: /health}
+
+glossary: {}

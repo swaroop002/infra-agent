@@ -1,0 +1,145 @@
+# Demo world for the fake backends. Durations are relative to "now".
+hosts:
+  dev-app-01:
+    up: 0
+    down_for: 42m
+    cloud_state: running          # VM is running but node_exporter can't be scraped
+    history: ["26h..25h30m", "5d..4d23h"]
+  stg-app-01:
+    resources: {disk_used_pct: {"/": 93.4, "/data": 61.0}, mem_available_pct: 22}
+  prod-report-worker-01:
+    resources: {cpu_busy_pct: 91, load1_per_core: 2.6}
+    reboots: 1
+  prod-report-worker-02:
+    up: 0
+    down_for: 3h10m
+    cloud_state: stopped
+  prod-db-01:
+    resources: {mem_available_pct: 31}
+    history: ["3d..2d23h40m"]
+  build-runner-01: {}
+
+targets_extra:
+  - labels: {job: node, instance: "10.40.0.9:9100"}
+    up: 0
+  - labels: {job: node, instance: "10.40.0.10:9100"}
+    up: 1
+
+services:
+  payments-api:
+    requests_per_hour: 18000
+    error_pct: 2.7
+    previous_error_pct: 0.4
+    error_paths: {"/v1/charges": 380, "/v1/refunds": 55, "/v1/payment-intents": 20}
+    error_lines:
+      - '{"type":"access","status":502,"path":"/v1/charges","msg":"upstream timeout calling bank-gateway after 10s","trace_id":"9f1c2a"}'
+      - '{"type":"access","status":504,"path":"/v1/charges","msg":"bank-gateway deadline exceeded","trace_id":"77ab01"}'
+      - '{"type":"access","status":500,"path":"/v1/refunds","msg":"connection pool exhausted (max=50)","trace_id":"c0ffee"}'
+    probes:
+      healthz: {ok: true, status: 200, latency_ms: 85}
+  report-generation:
+    requests_per_hour: 900
+    error_pct: 11.5
+    previous_error_pct: 1.2
+    error_paths: {"/v2/reports/export": 70, "/v2/reports/schedule": 12}
+    error_lines:
+      - 'level=error endpoint=/v2/reports/export msg="render failed" err="java.lang.OutOfMemoryError: Java heap space"'
+      - 'level=error endpoint=/v2/reports/export msg="worker unavailable" worker=prod-report-worker-02'
+    probes:
+      health: {ok: false, status: 503, error: "unexpected status 503"}
+  auth-service:
+    requests_per_hour: 52000
+    error_pct: 0.08
+    previous_error_pct: 0.07
+    error_paths: {"/oauth/token": 30}
+    probes:
+      ready: {ok: true, status: 200, latency_ms: 22}
+  dev-portal:
+    probes:
+      health: {ok: false, error: "ConnectTimeout: timed out"}
+
+k8s:
+  workloads:
+    prod-gke/reports/report-generator:
+      desired: 3
+      available: 1
+      restarts: {report-generator-7d9f6c-abcde: 9, report-generator-7d9f6c-xyz12: 14}
+      waiting: {report-generator-7d9f6c-xyz12: CrashLoopBackOff}
+      oom_killed: [report-generator-7d9f6c-xyz12]
+    prod-aks/payments/payments-api: {desired: 4, available: 4}
+    prod-aks/identity/auth: {desired: 3, available: 3}
+  clusters:
+    prod-gke:
+      nodes_not_ready: {gke-prod-gke-reports-pool-1a2b: reports-pool}
+      crashlooping: [reports/report-generator-7d9f6c-xyz12]
+    prod-aks: {}
+
+alerts:
+  - source: grafana
+    title: ReportGeneratorPodsCrashLooping
+    state: firing
+    severity: critical
+    started_ago: 50m
+    labels: {service: report-generation, namespace: reports, deployment: report-generator}
+    summary: report-generator pods restarting repeatedly (OOMKilled)
+  - source: oncall
+    title: "[prod] payments-api 5xx rate above 2%"
+    state: acknowledged
+    severity: high
+    started_ago: 1h20m
+    labels: {service: payments-api, severity: high}
+    url: https://oncall.example.com/alert-groups/IABC123
+  - source: grafana
+    title: InstanceDown
+    state: firing
+    severity: warning
+    started_ago: 40m
+    labels: {instance: "10.10.1.15:9100", job: node}
+    summary: dev-app-01 node_exporter unreachable
+  - source: grafana
+    title: InstanceDown
+    state: firing
+    severity: warning
+    started_ago: 3h5m
+    labels: {instance: "10.30.2.12:9100", job: node}
+  - source: oncall
+    title: Disk space low on stg-app-01
+    state: resolved
+    severity: warning
+    started_ago: 20h
+    ended_ago: 18h
+    labels: {instance: "10.20.4.7:9100"}
+
+vibe_vms:
+  - id: i-0vibe00000000a11
+    name: vibe-alice-01
+    owner: alice@example.com
+    state: running
+    launched_ago: 5h
+    tags: {ProvisionStatus: complete}
+    apps:
+      vscode: {ok: true, status: 200, latency_ms: 40}
+      deployments-manager: {ok: false, error: "ConnectError: connection refused"}
+  - id: i-0vibe00000000b22
+    name: vibe-bob-01
+    owner: bob@example.com
+    state: stopped
+    launched_ago: 3d
+  - id: i-0vibe00000000c33
+    name: vibe-carol-02
+    owner: carol@example.com
+    state: running
+    launched_ago: 26h
+    status_checks: {system: ok, instance: impaired}
+    apps:
+      vscode: {ok: false, error: "timeout after 4.0s"}
+      deployments-manager: {ok: false, error: "timeout after 4.0s"}
+  - id: i-0vibe00000000d44
+    name: vibe-dan-01
+    owner: dan@example.com
+    state: running
+    launched_ago: 50m
+    tags: {ProvisionStatus: ansible-failed}
+    apps:
+      vscode: {ok: true}
+      deployments-manager: {ok: false, error: "ConnectError: connection refused"}

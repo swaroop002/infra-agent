@@ -1,0 +1,38 @@
+# Demo mode: fake backends driven by examples/demo/scenario.yaml. Only the LLM is real.
+llm:
+  model: ${INFRA_AGENT_MODEL:-anthropic:claude-opus-5}
+  params:
+    max_tokens: 8000
+  max_tool_rounds: 10
+
+knowledge:
+  catalog_dirs: [examples/demo/catalog]
+  docs_dirs: [examples/demo/docs]
+
+backends:
+  metrics: {type: fake, scenario: examples/demo/scenario.yaml}
+  logs: {type: fake, scenario: examples/demo/scenario.yaml}
+  alerts:
+    - {type: fake, scenario: examples/demo/scenario.yaml}
+  inventory:
+    - {type: fake, scenario: examples/demo/scenario.yaml, provider: aws}
+    - {type: fake, scenario: examples/demo/scenario.yaml, provider: azure, name: fake-azure}
+    - {type: fake, scenario: examples/demo/scenario.yaml, provider: gcp, name: fake-gcp}
+  prober: {type: fake, scenario: examples/demo/scenario.yaml}
+  metrics_retention: 7d
+
+ledger:
+  url: sqlite:///data/demo-ledger.db
+  interval_s: 60
+  run_in_server: true
+
+memory:
+  type: memory
+
+server:
+  port: 8080
+  auth:
+    mode: none
+
+teams:
+  enabled: false

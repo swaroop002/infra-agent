@@ -1,0 +1,42 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.19/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.19",
+  "version": "0.1.0",
+  "id": "${BOT_APP_ID}",
+  "developer": {
+    "name": "Platform Engineering",
+    "websiteUrl": "https://infra-agent.internal.example.com",
+    "privacyUrl": "https://infra-agent.internal.example.com/privacy",
+    "termsOfUseUrl": "https://infra-agent.internal.example.com/terms"
+  },
+  "name": { "short": "Infra Agent", "full": "Infra Agent (read-only SRE assistant)" },
+  "description": {
+    "short": "Ask about servers, services, API errors and alerts.",
+    "full": "Read-only assistant over Prometheus, Loki, Grafana, OnCall and cloud inventory. Ask in plain English or use /alerts, /status, /downtime, /health, /uptime."
+  },
+  "icons": { "color": "color.png", "outline": "outline.png" },
+  "accentColor": "#2F6FDD",
+  "bots": [
+    {
+      "botId": "${BOT_APP_ID}",
+      "scopes": ["personal", "team", "groupChat"],
+      "supportsFiles": false,
+      "isNotificationOnly": false,
+      "commandLists": [
+        {
+          "scopes": ["personal", "team", "groupChat"],
+          "commands": [
+            { "title": "/alerts", "description": "Active and recent alerts, e.g. /alerts 6h" },
+            { "title": "/status", "description": "Down servers, open outages, service status" },
+            { "title": "/downtime", "description": "VM outage history, e.g. /downtime dev-app-01 7d" },
+            { "title": "/health", "description": "Service health, e.g. /health payments-api" },
+            { "title": "/uptime", "description": "Service uptime table, e.g. /uptime 30d" },
+            { "title": "/reset", "description": "Start a new conversation" }
+          ]
+        }
+      ]
+    }
+  ],
+  "permissions": ["identity", "messageTeamMembers"],
+  "validDomains": ["infra-agent.internal.example.com"]
+}
